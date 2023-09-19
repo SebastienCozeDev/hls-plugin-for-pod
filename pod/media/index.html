@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Clappr/Hls.js with P2P Media Loader</title>
+        <meta charset="utf-8">
+
+        <script src="/static/@peertube/p2p-media-loader-core/build/p2p-media-loader-core.js"></script>
+        <script src="/static/@peertube/p2p-media-loader-hlsjs/build/p2p-media-loader-hlsjs.js"></script>
+        <link href="/static/video.js/dist/video-js.min.css" rel="stylesheet">
+        <script id="videojs_script_id" src="/static/video.js/dist/video.min.js?ver=3.4.0"></script>
+
+        <script src="/static/videojs-quality-selector-hls/dist/videojs-quality-selector-hls.min.js"></script>
+        <link href="/static/videojs-quality-selector-hls/dist/videojs-quality-selector-hls.css" rel="stylesheet">
+
+        <script src="./js/hls-plugin.js" type="module"></script>
+
+        <script>
+            var downloadTotals = { http: 0, p2p: 0 };
+            var uploadTotal = 0;
+            var nb_peers = 0;
+        </script>
+        <script src="/static/js/video-p2p-stats.js"></script>
+    </head>
+    <body>
+    <div style="">
+        <video id="video" class="video-js vjs-default-skin" controls autoplay muted width="600px"></video>
+    </div>
+    <div class="d-flex justify-content-end">
+        <span id="p2p-stat-peers" data-bs-toggle="tooltip" data-bs-title="">
+            <i class="bi bi-people-fill" aria-hidden="true"></i> 0
+        </span>&nbsp;|&nbsp;
+        <span id="p2p-stat-info">
+            <span id="p2p-stat-info-download" data-bs-toggle="tooltip" data-bs-title="">&nbsp;</span>
+            &nbsp;-&nbsp;
+            <span id="p2p-stat-info-upload" data-bs-toggle="tooltip" data-bs-title="">&nbsp;</span>
+        </span>
+    </div>
+
+        <script type="module">
+            import './js/hls-plugin.js';
+            import '/static/videojs-quality-selector-hls/dist/videojs-quality-selector-hls.min.js';
+            console.log(p2pml.hlsjs.Engine.isSupported());
+            if (p2pml.hlsjs.Engine.isSupported()) {
+                var engineHlsJs = new p2pml.hlsjs.Engine();
+
+                engineHlsJs.on(p2pml.core.Events.PeerConnect, onPeerConnect.bind(this));
+                engineHlsJs.on(p2pml.core.Events.PeerClose, onPeerClose.bind(this));
+
+                engineHlsJs.on(p2pml.core.Events.PieceBytesDownloaded, onBytesDownloaded.bind(this));
+                engineHlsJs.on(p2pml.core.Events.PieceBytesUploaded, onBytesUploaded.bind(this));
+
+                var player = videojs("video", {
+                    html5: {
+                        hlsjsConfig: {
+                            liveSyncDurationCount: 10, // To have at least 7 segments in queue
+                            loader: engineHlsJs.createLoaderClass(),
+                        },
+                    },
+                });
+                player.hlsjs({});
+                player.src({
+                    src: "https://fly.live.ceeblue.tv/cmaf/out+de1e6f7c-e5db-450b-9603-c3644274779b/index.m3u8",
+                    type: "application/x-mpegURL",
+                });
+                player.qualitySelectorHls({
+                    displayCurrentQuality: true,
+                });
+                p2pml.hlsjs.initVideoJsHlsJsPlugin(player);
+            } else {
+                document.write("Not supported :(");
+            }
+            console.log(downloadTotals);
+        </script>
+    </body>
+</html>
